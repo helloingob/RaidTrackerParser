@@ -5,6 +5,7 @@
         public int ID { get; set; }
         public string Name { get; set; }
         public int WOWID { get; set; }
+        public int Quality { get; set; }
 
         public ItemTO(string name, int wowid)
         {

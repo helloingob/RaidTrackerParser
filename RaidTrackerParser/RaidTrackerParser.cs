@@ -9,7 +9,7 @@ namespace RaidTrackerParser
 {
     public class RaidTrackerParser
     {
-        private const string DateFormat = "dd/MM/yy HH:mm:ss";
+        private const string DateFormat = "MM/dd/yy HH:mm:ss";
         private readonly CultureInfo _provider = CultureInfo.InvariantCulture;
 
         private List<PlayerTO> _players = new List<PlayerTO>();
@@ -39,7 +39,7 @@ namespace RaidTrackerParser
                 if (playerParse)
                 {
                     var player = ParsePlayerInfo(line);
-                    _players.Add(player);
+                    if (player != null) _players.Add(player);
                 }
 
                 if (lootParse)
@@ -81,27 +81,23 @@ namespace RaidTrackerParser
             var joinedDate = DateTime.ParseExact(joinedDateString, DateFormat, _provider);
 
             string race;
-            string guild = null;
+            string guild;
             string playerClass;
             int level;
 
-            //Too far away; No race & guild (#2)
-            if (playerInfoParts.Length == 4)
-            {
-                level = Convert.ToInt32(playerInfoParts[1].Trim());
-                race = playerInfoParts[2].Trim();
-                playerClass = playerInfoParts[3].Trim();
-            }
-            //Normal format  (#1)
-            else
+            if (playerInfoParts.Length == 5)
             {
                 race = playerInfoParts[1].Trim();
                 guild = playerInfoParts[2].Trim();
                 playerClass = playerInfoParts[3].Trim();
                 level = Convert.ToInt32(playerInfoParts[4].Trim());
+                return new PlayerTO(name, guild, playerClass, race, level, joinedDate, leftDate);
             }
-
-            return new PlayerTO(name, guild, playerClass, race, level, joinedDate, leftDate);
+            else
+            {
+                Console.WriteLine("Skipped player: " +line);
+                return null;
+            }
         }
 
         //1 Thorium Lockbox (5759) at 09/05/20 19:52:43 from Trash mob to Phiora

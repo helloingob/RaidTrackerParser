@@ -28,6 +28,7 @@ CREATE TABLE Item (
 	Item_ID INTEGER NOT NULL,
 	WOW_ID INTEGER UNIQUE,
 	Name TEXT,
+	Quality INTEGER,
 	PRIMARY KEY(Item_ID)
 );
 
@@ -55,7 +56,7 @@ CREATE TABLE Loot (
 	PRIMARY KEY(Loot_ID),
 	CONSTRAINT Loot_Item_ID_Item_Item_ID FOREIGN KEY (Item_ID) REFERENCES Item (Item_ID),
 	CONSTRAINT Loot_Mob_ID_Mob_Mob_ID FOREIGN KEY (Mob_ID) REFERENCES Mob (Mob_ID),
-	CONSTRAINT Loot_Raid_Raid_ID_Raid_Raid_ID FOREIGN KEY (Raid_ID) REFERENCES Raid (Raid_ID),
+	CONSTRAINT Loot_Raid_Raid_ID_Raid_Raid_ID FOREIGN KEY (Raid_ID) REFERENCES Raid (Raid_ID) ON DELETE CASCADE,
 	CONSTRAINT Loot_Player_ID_Player_Player_ID FOREIGN KEY (Player_ID) REFERENCES Player (Player_ID)
 );
 
@@ -70,5 +71,5 @@ CREATE TABLE Attendance (
 	End_Date INTEGER,
 	PRIMARY KEY(Attendance_ID),
 	CONSTRAINT Attendance_Player_ID_Player_Player_ID FOREIGN KEY (Player_ID) REFERENCES Player (Player_ID),
-	CONSTRAINT Attendance_Raid_ID_Raid_Raid_ID FOREIGN KEY (Raid_ID) REFERENCES Raid (Raid_ID)
+	CONSTRAINT Attendance_Raid_ID_Raid_Raid_ID FOREIGN KEY (Raid_ID) REFERENCES Raid (Raid_ID) ON DELETE CASCADE
 );

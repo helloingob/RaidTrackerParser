@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.IO;
+using System.Threading;
 using Microsoft.VisualBasic.CompilerServices;
 using RaidTrackerParser.Data;
 
@@ -289,7 +291,7 @@ namespace RaidTrackerParser
             sqLiteCommand.Parameters.AddWithValue("@Level", player.Level);
             sqLiteCommand.Parameters.AddWithValue("@Name", player.Name);
 
-            Console.WriteLine("Player Updated: " +player.Level +" - " + player.Name + " (" + player.Guild +")");
+            Console.WriteLine("Player Updated: " + player.Level + " - " + player.Name + " (" + player.Guild + ")");
 
             sqLiteCommand.ExecuteNonQuery();
         }
@@ -317,6 +319,46 @@ namespace RaidTrackerParser
             }
 
             return null;
+        }
+        
+        public void UpdateItemQuality()
+        {
+            foreach (var item in GetItemsWithoutQuality())
+            {
+                var quality = ItemQualityHandler.GetQuality(item);
+                item.Quality = quality;
+                UpdateItem(item);
+                //DDOS prevention (:
+                Thread.Sleep(1000);
+            }
+        }
+
+        private IEnumerable<ItemTO> GetItemsWithoutQuality()
+        {
+            using var sqLiteCommand = new SQLiteCommand("SELECT * FROM Item WHERE Quality IS null", connection);
+            using var sqLiteDataReader = sqLiteCommand.ExecuteReader();
+
+            var items = new List<ItemTO>();
+
+            while (sqLiteDataReader.Read())
+            {
+                var item = new ItemTO();
+                item.WOWID = sqLiteDataReader.GetInt32(sqLiteDataReader.GetOrdinal("WOW_ID"));
+                item.ID = sqLiteDataReader.GetInt32(sqLiteDataReader.GetOrdinal("Item_ID"));
+                item.Name = sqLiteDataReader.GetString(sqLiteDataReader.GetOrdinal("Name"));
+                items.Add(item);
+            }
+
+            return items;
+        }
+
+        private void UpdateItem(ItemTO item)
+        {
+            using var sqLiteCommand = new SQLiteCommand("UPDATE Item SET Quality = @Quality WHERE WOW_ID = @WOWID", connection);
+            sqLiteCommand.Parameters.AddWithValue("@Quality", item.Quality);
+            sqLiteCommand.Parameters.AddWithValue("@WOWID", item.WOWID);
+            Console.WriteLine("Quality Updated: " + item.Name + " has quality " + item.Quality);
+            sqLiteCommand.ExecuteNonQuery();
         }
     }
 }
