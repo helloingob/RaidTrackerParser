@@ -49,8 +49,8 @@ namespace RaidTrackerParser
 
             foreach (var loot in raid.Loot)
             {
-                WriteItem(loot.Item);
                 WriteMob(loot.Mob);
+                WriteItem(loot.Item);
                 WriteLoot(raid, loot);
             }
         }
@@ -90,12 +90,12 @@ namespace RaidTrackerParser
 
         private void WriteItem(ItemTO item)
         {
-            var foundItem = GetItem(item.WOWID);
+            var foundItem = GetItem(item.WowId);
             if (foundItem == null)
             {
                 using var sqLiteCommand = new SQLiteCommand("INSERT INTO Item(WOW_ID, Name) VALUES(@WOWID,@Name)", connection);
 
-                sqLiteCommand.Parameters.AddWithValue("@WOWID", item.WOWID);
+                sqLiteCommand.Parameters.AddWithValue("@WOWID", item.WowId);
                 sqLiteCommand.Parameters.AddWithValue("@Name", item.Name);
 
                 Console.WriteLine("Add new Item: " + item.Name);
@@ -122,7 +122,7 @@ namespace RaidTrackerParser
             while (sqLiteDataReader.Read())
             {
                 var item = new ItemTO();
-                item.WOWID = WOWID;
+                item.WowId = WOWID;
                 item.ID = sqLiteDataReader.GetInt32(sqLiteDataReader.GetOrdinal("Item_ID"));
                 item.Name = sqLiteDataReader.GetString(sqLiteDataReader.GetOrdinal("Name"));
                 return item;
@@ -277,8 +277,14 @@ namespace RaidTrackerParser
             else
             {
                 player.ID = foundPlayer.ID;
-                if (!string.Equals(player.Guild, foundPlayer.Guild) || !Equals(player.Level, foundPlayer.Level))
+                if (!string.Equals(player.Guild, foundPlayer.Guild))
                 {
+                    Console.WriteLine("Update player "+ player.Name +"'s guild: '" + foundPlayer.Guild + "' -> '" + player.Guild +"'");
+                    UpdatePlayer(player);
+                }
+                if (!Equals(player.Level, foundPlayer.Level))
+                {
+                    Console.WriteLine("Update player "+ player.Name +"'s level: '" + foundPlayer.Level + "' -> '" + player.Level +"'");
                     UpdatePlayer(player);
                 }
             }
@@ -290,9 +296,7 @@ namespace RaidTrackerParser
             sqLiteCommand.Parameters.AddWithValue("@Guild", player.Guild);
             sqLiteCommand.Parameters.AddWithValue("@Level", player.Level);
             sqLiteCommand.Parameters.AddWithValue("@Name", player.Name);
-
-            Console.WriteLine("Player Updated: " + player.Level + " - " + player.Name + " (" + player.Guild + ")");
-
+            
             sqLiteCommand.ExecuteNonQuery();
         }
 
@@ -343,7 +347,7 @@ namespace RaidTrackerParser
             while (sqLiteDataReader.Read())
             {
                 var item = new ItemTO();
-                item.WOWID = sqLiteDataReader.GetInt32(sqLiteDataReader.GetOrdinal("WOW_ID"));
+                item.WowId = sqLiteDataReader.GetInt32(sqLiteDataReader.GetOrdinal("WOW_ID"));
                 item.ID = sqLiteDataReader.GetInt32(sqLiteDataReader.GetOrdinal("Item_ID"));
                 item.Name = sqLiteDataReader.GetString(sqLiteDataReader.GetOrdinal("Name"));
                 items.Add(item);
@@ -356,7 +360,7 @@ namespace RaidTrackerParser
         {
             using var sqLiteCommand = new SQLiteCommand("UPDATE Item SET Quality = @Quality WHERE WOW_ID = @WOWID", connection);
             sqLiteCommand.Parameters.AddWithValue("@Quality", item.Quality);
-            sqLiteCommand.Parameters.AddWithValue("@WOWID", item.WOWID);
+            sqLiteCommand.Parameters.AddWithValue("@WOWID", item.WowId);
             Console.WriteLine("Quality Updated: " + item.Name + " has quality " + item.Quality);
             sqLiteCommand.ExecuteNonQuery();
         }

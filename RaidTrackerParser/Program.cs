@@ -15,13 +15,13 @@ namespace RaidTrackerParser
             var watchTotal = Stopwatch.StartNew();
 
             var sqlHandler = new SQLHandler();
+            
+            //Console.Write("Generate sqlite database... ");
+            //sqlHandler.GenerateDatabase();
+            //Console.WriteLine("Finished.");
 
             foreach (var fileName in Directory.GetFiles(@"E:\RaidTrackerLog"))
             {
-                //Console.Write("Generate sqlite database... ");
-                //sqlHandler.GenerateDatabase();
-                //Console.WriteLine("Finished.");
-
                 var raidTrackerParser = new RaidTrackerParser();
                 Console.WriteLine("Parsing log from '" + Path.GetFileName(fileName) + "'");
                 var raid = raidTrackerParser.ParseLog(fileName);
@@ -34,7 +34,7 @@ namespace RaidTrackerParser
             }
 
             Console.WriteLine("Updating item quality ... ");
-            sqlHandler.UpdateItemQuality();
+            //sqlHandler.UpdateItemQuality();
             Console.WriteLine("Finished.");
 
             watchTotal.Stop();

@@ -14,7 +14,7 @@ namespace RaidTrackerParser
         public static int GetQuality(ItemTO item)
         {
             using var client = new WebClient();
-            var contents = client.DownloadString($"https://www.wowhead.com/item={item.WOWID}&xml");
+            var contents = client.DownloadString($"https://www.wowhead.com/item={item.WowId}&xml");
 
             var xDocument = XDocument.Parse(contents);
 
