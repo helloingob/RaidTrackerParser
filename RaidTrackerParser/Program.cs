@@ -34,7 +34,7 @@ namespace RaidTrackerParser
             }
 
             Console.WriteLine("Updating item quality ... ");
-            //sqlHandler.UpdateItemQuality();
+            sqlHandler.UpdateItemQuality();
             Console.WriteLine("Finished.");
 
             watchTotal.Stop();

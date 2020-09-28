@@ -41,9 +41,11 @@ namespace RaidTrackerParser
             }
 
             WriteRaid(raid);
+            var lastRaidTime = GetLastRaidTime();
+
             foreach (var player in raid.Players)
             {
-                WritePlayer(player);
+                WritePlayer(raid, lastRaidTime, player);
                 WriteAttendance(raid, player);
             }
 
@@ -217,7 +219,7 @@ namespace RaidTrackerParser
 
         private void WriteLoot(RaidTO raid, LootTO loot)
         {
-            if (GetLoot(raid, loot)) return;
+            if (GetLoot(loot)) return;
             using var sqLiteCommand = new SQLiteCommand("INSERT INTO Loot(Date, Item_ID, Mob_ID, Raid_ID, Player_ID) VALUES(@Date,@ItemID,@MobID,@RaidID,@PlayerID)", connection);
 
             sqLiteCommand.Parameters.AddWithValue("@Date", loot.Date.ToFileTimeUtc());
@@ -236,7 +238,7 @@ namespace RaidTrackerParser
             loot.ID = (int) lastRowId64;
         }
 
-        private bool GetLoot(RaidTO raid, LootTO loot)
+        private bool GetLoot(LootTO loot)
         {
             using var sqLiteCommand = new SQLiteCommand("SELECT COUNT(*) FROM Loot WHERE Date = @Date AND Item_ID = @ItemID AND Player_ID = @Player_ID", connection);
             sqLiteCommand.Parameters.AddWithValue("@Date", loot.Date.ToFileTimeUtc());
@@ -252,7 +254,7 @@ namespace RaidTrackerParser
             return false;
         }
 
-        private void WritePlayer(PlayerTO player)
+        private void WritePlayer(RaidTO raid, DateTime lastRaidTime, PlayerTO player)
         {
             var foundPlayer = GetPlayer(player.Name);
             if (foundPlayer == null)
@@ -277,6 +279,10 @@ namespace RaidTrackerParser
             else
             {
                 player.ID = foundPlayer.ID;
+                
+                //Update only if player info is newer than the last raid
+                if (raid.EndDate <= lastRaidTime) return;
+
                 if (!string.Equals(player.Guild, foundPlayer.Guild))
                 {
                     Console.WriteLine("Update player "+ player.Name +"'s guild: '" + foundPlayer.Guild + "' -> '" + player.Guild +"'");
@@ -288,6 +294,19 @@ namespace RaidTrackerParser
                     UpdatePlayer(player);
                 }
             }
+        }
+        
+        private DateTime GetLastRaidTime()
+        {
+            using var sqLiteCommand = new SQLiteCommand("SELECT End_Date FROM Raid ORDER BY End_Date DESC LIMIT 1", connection);
+            using var sqLiteDataReader = sqLiteCommand.ExecuteReader();
+
+            while (sqLiteDataReader.Read())
+            {
+                var endDate = sqLiteDataReader.GetInt64("End_Date");
+                return DateTime.FromFileTimeUtc(endDate);
+            }
+            return DateTime.MinValue;
         }
 
         private void UpdatePlayer(PlayerTO player)
